@@ -239,5 +239,65 @@ module.exports = {
 pnpx mrm lint-staged
 :::
 
-### 安装
-- mrm 
+### 使用mrm安装 lint-staged
+- mrm 会查看package.json用到的依赖项进行安装和配置，无需手动操作
+- 它安装过后，会出现.husky目录， 和package.json里的 lint-staged 配置
+- 对实际情况进行适当修改
+
+
+### commitlint
+> commitlint 推荐我们使用 config-conventional 配置去写 commit
+
+```
+pnpm i @commitlint/cli @commitlint/config-conventional -D
+```
+- 配置文件 
+```
+echo "module.exports = {extends: ['@commitlint/config-conventional']}" > .commitlintrc.js.js
+```
+- 提交格式 `git commit -m <type>[optional scope]: <description>`
+- type格式 (默认的) 可以在配置文件里配置其他
+```
+feat：新功能（feature）
+fix：修补bug
+docs：文档（documentation）
+style： 格式（不影响代码运行的变动）
+refactor：重构（即不是新增功能，也不是修改bug的代码变动）
+test：增加测试
+chore：构建过程或辅助工具的变动
+merge：合并分支
+perf：优化相关，比如提升性能、体验
+revert：回滚到上一个版本
+build：构建
+```
+- 配置钩子
+```
+pnpx husky add .husky/commit-msg "npx --no-install commitlint --edit $1"
+```
+
+## 配置别名
+
+```js
+// vite.config.ts
+import {resolve} from 'path';
+
+ {
+    resolve:{
+        alias: {
+            "@": resolve('src')
+        }
+    }
+}
+```
+::: warning 注意
+当然在vite里配置别名后，ts是不会认的
+:::
+
+- tsconfig.json也需要配置
+```json
+{
+    "paths": {
+        "@/*": ["src/*"]
+    }
+}
+```
