@@ -7,7 +7,7 @@ export default defineConfig({
         nav: [
             { "link": '/guide/', text: '指南' },
             { "link": '/difference/', text: 'v2与v3区别' },
-            { "link": '/reactivity/', text: 'Vue3响应式原理' }
+            { "link": '/reactivity/', text: 'reactivity模块' }
         ],
         // sidebar: 'auto',
         sidebarDepth: 2,
@@ -28,7 +28,7 @@ export default defineConfig({
             ],
             "/reactivity": [
                 {
-                    title: 'Vue3响应式原理',
+                    title: 'reactivity模块',
                     path: '/reactivity/',
                     sidebarDepth: 2,
                     collapsable: false,
