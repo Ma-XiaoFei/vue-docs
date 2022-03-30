@@ -210,7 +210,7 @@ echo {}> .prettierrc.js
 ```
 ```js
 module.exports = {
-    printWidth: 100, // 代码宽度建议不超过100字符
+    printWidth: 70, // 代码宽度建议不超过100字符
     tabWidth: 4, // tab缩进2个空格
     semi: true, // 末尾分号
     singleQuote: true, // 单引号

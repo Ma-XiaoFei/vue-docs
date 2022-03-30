@@ -398,3 +398,24 @@ parent 是用来 存储effect父子的关系
   }
 
 ```
+
+
+## computed
+> 计算属性，传入一个fn 返回一个对象， {value: 'xx'}
+- computed 内部依然使用的是 ReactiveEffect这个类
+
+
+
+```
+```
+
+
+
+
+
+
+
+
+
+
+## ref

@@ -1,7 +1,11 @@
 ### vue3
 
 ::: tip v3 版本的改变
-Vue3提升了性能，用Proxy来代替Object.defineProperty, 优化了diff算法，更好的tree-shaking，更好的支持Ts
+- Vue3提升了性能，用Proxy来代替Object.defineProperty, 优化了diff算法，更好的tree-shaking，更好的支持Ts
+- Compostion Api
+vue2中使用options Api，用户使用props、data、methods、等 编写困难，上下来回跳动。
+- vue2中项目未使用的模块依然会打包，而3中采用模块化api，利于减少打包体积。
+- vue3注重模块的拆分，vue2中无法单独使用模块
 :::
 - v-ref变化  在v-for上 之前会生成数组返回， 现在需要自定义函数来保存每个项
 

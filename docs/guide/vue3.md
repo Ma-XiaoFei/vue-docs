@@ -39,3 +39,12 @@ setup里访问不到 v2 里 的 data、methods）
 
 3、setup优先级要高
 :::
+
+## reactive 
+- 创建响应式proxy对象的Api 
+
+```js
+const data = reactive({ name: 'hello',age: 20 })
+
+data.name = '哈哈' // 视图刷新
+```
