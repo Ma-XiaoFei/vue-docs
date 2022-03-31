@@ -419,3 +419,194 @@ parent 是用来 存储effect父子的关系
 
 
 ## ref
+
+
+
+
+
+
+
+
+
+
+
+## 手写源码
+```js
+// package结构
+        | baseHandler.ts
+        | effect.ts
+ package| index.ts
+        | reactive.ts
+        | shared.ts
+
+```
+
+- index.ts
+```
+export { reactive } from './reacive';
+export { effect } from './effect';
+
+```
+### reactive 
+
+
+```js
+import { mutableHandler } from './baseHandler';
+import { isObject } from './shared';
+
+const reactiveMap = new Map();
+
+export enum ReactiveFlags {
+    isReactive = '__v_isReactive',
+}
+
+export function reactive(target) {
+    //如果不是对象直接返回
+    if (!isObject(target)) return target;
+    //如果target对象上有这个标记 直接返回
+    if (target[ReactiveFlags.isReactive]) { 
+        return target;
+    }
+
+    const exitingProxy = reactiveMap.get(target);
+    if (exitingProxy) {
+        return exitingProxy;
+    }
+
+    const proxy = new Proxy(target, mutableHandler);
+    //存储源对象映射
+    reactiveMap.set(target, proxy);
+    return proxy;
+}
+
+```
+
+### effect
+```js
+//正在激活的effect
+let activeEffect = undefined;
+
+//用来存储目标对象 用到的属性集合  =》 { target: { key: [ effect ] } }
+const targetMap = new Map();
+
+//清楚依赖dep Fn
+function cleanupEffect(effect) {
+    const { deps } = effect;
+    if (deps.length) {
+        for (let i = 0; i < deps.length; i++) {
+            deps[i].delete(effect);
+        }
+        deps.length = 0;
+    }
+}
+
+//公共类， 用来管理effect运行
+class ReactiveEffect {
+    public active = true;
+    public parent = undefined;
+    public deps = [];
+    constructor(public fn) {}
+
+    stop() {
+        this.active = false;
+        cleanupEffect(this);
+    }
+
+    run() {
+        if (!this.active) return this.fn();
+
+        try {
+            this.parent = activeEffect;
+            activeEffect = this;
+            cleanupEffect(this);
+            return this.fn();
+        } finally {
+            activeEffect = this.parent;
+            this.parent = undefined;
+        }
+    }
+}
+
+//导出的effect
+export function effect(fn) {
+    const _effect = new ReactiveEffect(fn);
+    _effect.run();
+    const runner = _effect.run.bind(_effect);
+    runner.effect = _effect;
+    return runner;
+}
+
+// 用来收集依赖
+export function track(target, type, key) {
+    if (!activeEffect) return;
+    let depsMap = targetMap.get(target);
+    if (!depsMap) {
+        targetMap.set(target, (depsMap = new Map()));
+    }
+    let dep = depsMap.get(key);
+    if (!dep) {
+        depsMap.set(key, (dep = new Set()));
+    }
+    const shouldTrack = !dep.has(activeEffect);
+
+    if (shouldTrack) {
+        dep.add(activeEffect);
+        activeEffect.deps.push(dep);
+    }
+}
+
+//用来触发依赖的fn
+export function trigger(target, type, key, value, oldValue) {
+    const depsMap = targetMap.get(target);
+    if (!depsMap) return;
+    const dep = depsMap.get(key);
+    if (dep) {
+        const deps = [...dep];
+        deps.forEach(effect => {
+            effect !== activeEffect && effect.run();
+        });
+    }
+}
+
+```
+
+### baseHandler 
+```js
+import { reactive, ReactiveFlags } from './reacive';
+import { isObject } from './shared';
+import { track, trigger } from './effect';
+
+export const mutableHandler = {
+    get(target, key, reciver) {
+        if (key === ReactiveFlags.isReactive) {
+            return true;
+        }
+        track(target, 'get', key);
+        const res = Reflect.get(target, key, reciver);
+        //判断是不是一个对象，如果是再次reactive
+        return isObject(res) ? reactive(res) : res;
+    },
+    set(target, key, value, reciver) {
+        const oldValue = target[key];
+        const res = Reflect.set(target, key, value, reciver);
+        if (!Object.is(oldValue, value)) {
+            trigger(target, 'set', key, value, oldValue);
+        }
+
+        return res;
+    }
+};
+```
+
+- shared.ts
+
+```js
+export const isObject = (obj)=> typeof obj === 'object';
+```
+
+
+## 流程总结
+- 当我们reactive一个对象的时候， 会返回一个proxy对象，这个proxy里代理了get、set、delete、等操作。
+- 当我们 使用 effect函数的时候，使用到了reactive过的对象，会重新执行，并渲染， vue组件也就是使用effect嵌套出的。
+- effect 里使用的属性，会触发proxy的get方法、通过track收集对象的依赖。
+- 当属性值被set后，会去触发proxy的set方法， 最终去trriger触发所有的依赖对应的effect
